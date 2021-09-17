@@ -8,9 +8,17 @@ This is a gradle plugin to configure repositories and plugins dynamically for on
 gradle clean build
 ```
 
-### Testing
+### Testing Local
 ```
-cd example
+#build the plugin locally
+gradle clean build
+cd example/local
+gradle clean build -I init.gradle.kts
+```
+
+### Testing Remote
+```
+cd example/remote
 gradle clean build -I init.gradle.kts
 ```
 
@@ -43,6 +51,32 @@ repositories:
 
 See build.gradle.kts and init.gradle.kts
 
+
+### One time configuration
+save the following as $GRADLE_USER_HOME/init.d/init.gradle.kts
+```
+initscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.github.skhatri:gradle-reposet-plugin:0.1.2")
+    }
+}
+
+apply<com.github.skhatri.gradle.init.ReposetPlugin>()
+```
+Once set, you can also drop a reposet.yaml into $GRADLE_USER_HOME/init.d/reposet.yaml
+
+```
+plugins:
+    - id: java
+repositories:
+    - id: "my-enterprise-repo"
+      url: "https://internal.company/maven2"
+    - id: "mavenCentral"
+```
+This way all your projects will use the repositories you configure in a single place.
 
 
 ### Publishing

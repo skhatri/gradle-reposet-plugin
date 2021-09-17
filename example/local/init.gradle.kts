@@ -8,13 +8,13 @@ initscript {
         "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.4",
         "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.4",
         "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4",
-        "com.github.skhatri.gradle.plugins:com.github.skhatri.reposet:0.1"
+        "com.github.skhatri:gradle-reposet-plugin:0.1.2"
     )
 
     repositories {
         mavenCentral()
         flatDir {
-            dirs = setOf(File("./../build/libs"))
+            dirs = setOf(File("./../../build/libs"))
         }
     }
     dependencies {

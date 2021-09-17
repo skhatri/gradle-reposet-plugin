@@ -98,7 +98,7 @@ project.publishing.publications.withType(MavenPublication::class.java).forEach {
         withXml {
             val root = asNode()
             root.appendNode("name", project.name)
-            root.appendNode("description", "Plugin to upload and download files from AWS S3 buckets")
+            root.appendNode("description", "This plugin will provide config to set repositories and plugins for your projects. This can be useful to add default repository for personal or enterprise projects")
             root.appendNode("url", scmUrl)
         }
         licenses {
