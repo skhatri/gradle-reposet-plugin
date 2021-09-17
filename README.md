@@ -45,3 +45,9 @@ See build.gradle.kts and init.gradle.kts
 
 
 
+### Publishing
+
+```
+gradle clean build publish
+gradle clean build publishPlugins -Ptarget=gradle
+```

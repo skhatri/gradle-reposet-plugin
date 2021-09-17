@@ -1,15 +1,13 @@
-ext {
-    group = "com.github.skhatri.gradle.plugins"
-    version = "0.1"
-}
 plugins {
     id("idea")
     kotlin("jvm") version "1.5.21"
 
-    id("java-gradle-plugin")                          
-    id("maven-publish")                               
-    id("com.gradle.plugin-publish") version "0.14.0"
+    signing
 
+    id("maven-publish")
+
+    id("java-gradle-plugin")
+    id("com.gradle.plugin-publish") version "0.14.0"
 }
 
 repositories {
@@ -32,29 +30,113 @@ dependencies {
 }
 
 
-gradlePlugin {
-    plugins { 
-        create("com.github.skhatri.reposet") { 
-            id = "com.github.skhatri.reposet"
-            displayName = "A plugin to configure gradle repositories and plugins for one or all builds"
-            description = "This plugin will provide config to set repositories and plugins for your projects. This can be useful to add default repository for personal or enterprise projects"
-            implementationClass = "com.github.skhatri.gradle.init.ReposetPlugin"
+val sourcesJar by tasks.registering(Jar::class) {
+    dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+}
+
+val javadocJar by tasks.registering(Jar::class) {
+    dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+    from(tasks.javadoc)
+    archiveClassifier.set("javadoc")
+}
+
+
+artifacts {
+    add("archives", sourcesJar)
+    add("archives", javadocJar)
+}
+
+
+if (project.extra["target"] != "sonatype") {
+    gradlePlugin {
+        plugins {
+            create("com.github.skhatri.reposet") {
+                id = "com.github.skhatri.reposet"
+                displayName = "A plugin to configure gradle repositories and plugins for one or all builds"
+                description =
+                    "This plugin will provide config to set repositories and plugins for your projects. This can be useful to add default repository for personal or enterprise projects"
+                implementationClass = "com.github.skhatri.gradle.init.ReposetPlugin"
+            }
         }
     }
-}
 
-pluginBundle {
-    website = "https://github.com/skhatri/gradle-reposet-plugin"
-    vcsUrl = "https://github.com/skhatri/gradle-reposet-plugin.git"
-    tags = listOf("dynamic", "init", "repository", "reposet", "buildscript", "initscript") 
-}
-
-publishing {
-    repositories {
+    pluginBundle {
+        website = "${project.extra["scm.url"]}"
+        vcsUrl = "${project.extra["scm.url"]}"
+        tags = listOf("s3", "bucket", "upload", "download")
+    }
+} else {
+    publishing.repositories {
         maven {
-            name = "localPluginRepository"
-            url = uri("../local-plugin-repository")
+            var uploadUrl: String = if (project.extra["release"] == "true") {
+                "${project.extra["upload.release.url"]}"
+            } else {
+                "${project.extra["upload.snapshot.url"]}"
+            }
+            url = uri(uploadUrl)
+            credentials {
+                username = "${project.extra["upload.user"]}"
+                password = "${project.extra["upload.password"]}"
+            }
         }
     }
+}
+
+publishing.publications {
+    create<MavenPublication>("pluginMaven") {
+        artifact(sourcesJar.get())
+        artifact(javadocJar.get())
+    }
+}
+
+val scmUrl = project.extra["scm.url"]
+project.publishing.publications.withType(MavenPublication::class.java).forEach { publication ->
+
+    with(publication.pom) {
+        withXml {
+            val root = asNode()
+            root.appendNode("name", project.name)
+            root.appendNode("description", "Plugin to upload and download files from AWS S3 buckets")
+            root.appendNode("url", scmUrl)
+        }
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("${project.extra["author.handle"]}")
+                name.set("${project.extra["author.name"]}")
+                email.set("${project.extra["author.email"]}")
+            }
+        }
+        scm {
+            connection.set("scm:git:$scmUrl")
+            developerConnection.set("scm:git:$scmUrl")
+            url.set("${scmUrl}")
+        }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it is Sign }) {
+        allprojects {
+            extra["signing.keyId"] = "${project.extra["signing.keyId"]}"
+            extra["signing.secretKeyRingFile"] = "${project.extra["signing.secretKeyRingFile"]}"
+            extra["signing.password"] = "${project.extra["signing.password"]}"
+        }
+    }
+}
+
+signing {
+    sign(publishing.publications["pluginMaven"])
+}
+
+tasks.withType<Sign>().configureEach {
+    onlyIf { project.extra["release"] == "true" }
 }
 
