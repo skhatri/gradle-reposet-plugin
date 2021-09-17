@@ -10,17 +10,17 @@ import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.gradle.api.invocation.Gradle
 import java.io.File
+import java.util.logging.Logger
 
 open class ReposetPlugin : Plugin<Gradle> {
 
     companion object Factory {
-
+        val logger: Logger = Logger.getLogger(ReposetPlugin::class.java.name)
         data class RepositorySpec(val id: String, val url: String?, val flatDir: String?)
 
         data class PluginSpec(val id: String, val classpath: String?)
         data class PluginConfig(
             val plugins: List<PluginSpec>?,
-            val lang: List<String>?,
             val repositories: List<RepositorySpec>?
         )
 
@@ -94,7 +94,15 @@ open class ReposetPlugin : Plugin<Gradle> {
                 val f = File(it)
                 f.exists() && f.isFile
             }
-                ?: throw GradleException("REPOSET_FILE is not set and/or $pluginName.yaml is expected in one of current_dir or gradle init.d directories")
+                ?: ""
+        }
+        logger.fine("config file: $configFile")
+        if (configFile.isEmpty()) {
+            return PluginConfig(
+                listOf(
+                    PluginSpec("java", null)
+                ), listOf()
+            )
         }
         return YamlSupport().toInstance(configFile, PluginConfig::class.java)
     }
