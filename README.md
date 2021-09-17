@@ -60,10 +60,9 @@ initscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.github.skhatri:gradle-reposet-plugin:0.1.2")
+        classpath("com.github.skhatri.reposet:com.github.skhatri.reposet.gradle.plugin:0.1.2")
     }
 }
-
 apply<com.github.skhatri.gradle.init.ReposetPlugin>()
 ```
 Once set, you can also drop a reposet.yaml into $GRADLE_USER_HOME/init.d/reposet.yaml
