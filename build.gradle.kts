@@ -140,3 +140,7 @@ tasks.withType<Sign>().configureEach {
     onlyIf { project.extra["release"] == "true" }
 }
 
+tasks.withType<org.gradle.api.tasks.Copy>().configureEach {
+    duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.WARN
+}
+

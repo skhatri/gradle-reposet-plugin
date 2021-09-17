@@ -1,0 +1,1 @@
+rootProject.name="com.github.skhatri.reposet.gradle.plugin"
